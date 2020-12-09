@@ -1,0 +1,15 @@
+.AddCdEvent{
+		id 0 : integer
+		cd_type 1 : integer
+		cd_time 2 : integer
+		player_id 3 : integer
+		seat 4 : integer
+		begin_time 5 : integer
+		turns 6 : integer   #轮数
+		drop 7 : integer 	#rummy-drop费用/teenpatti-玩家当前下注最小值
+	}
+
+.DelCdEvent{
+	id 0 : integer
+	cd_type 1 : integer
+}

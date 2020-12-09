@@ -1,0 +1,150 @@
+.BalanceInfo{
+	type 0 : integer  #余额类型
+	last_operate_time 1 : string #最后一次操作时间
+	balance 2 : integer #金额
+	player_id 3 : integer 
+	sid 4 : integer #数据库自增id
+}
+
+.PlayerInfo{
+	seat 0 : integer
+	player_id 1 : integer
+	nickname 2 : string
+	head_id 3 : integer
+	head_url 4 : string
+	sex 5 : integer
+	balance_total 6 : integer
+	balance 7 : *BalanceInfo
+	avatar 8 : integer
+	fb_avatar 9 : string
+}
+
+.SeatState{
+	seat 0 : integer 
+	state 1 : integer
+}
+
+#结算信息
+.Winlost {
+	seat 0 : integer
+	winlost 1 : integer
+	fee 2 : integer #抽水
+	player_id 3 : integer #玩家id 
+}
+
+.CardsGroup {
+	type 0 : integer    					#类型 0：三条 1：同花顺E 2：顺子 3：同花 4:对子 5:无牌型
+	cards 1 : *integer  					#牌堆（三张或者三张以上）
+}
+
+.SeatCards {
+	seat 0 : integer
+	cardinfo 1 : CardsGroup  				#牌型信息
+	player_info 2 : PlayerInfo
+	is_check 3 : boolean 					#是否看过牌
+	compared_seats 4 : *integer  			#已经和这个玩家比过牌的位置（seat）,自己的位置看牌后记录
+	is_fold 5 : boolean 					#是否盖牌
+}
+
+.Seat_Bet{
+	seat 0 : integer
+	history 1 : *integer  				#下注金额历史
+	total_bet 2 : integer				#下注总额
+}
+
+
+#看牌/下注/盖牌/比牌/比牌回应请求
+.NormalReq {
+	bet_num 0 : integer 					#下注金额
+	choose 1 : integer   					#比牌选择1:同意 2:不同意
+}
+
+#送礼物请求
+.PlayerSendGiftReq {
+	from_player_id 0: integer
+	to_player_id 1: integer
+	gift_id 2: integer
+}
+
+#牌局结束事件
+.GameEndEvent{
+	player_map 0 : *PlayerInfo(seat)
+	seat_state_map 1 : *SeatState(seat)
+	player_cards_map 2 : *SeatCards(seat)
+	winlost_map 3 : *Winlost(seat)
+}
+
+.Seat_Type{
+		seat 0 : integer
+		type 1 : integer 					#1:sit 2:kick 3:left 4:reconnnect
+	}
+#坐位事件
+.SeatStateEvent{
+	player_map 0 : *PlayerInfo(seat)		#桌面玩家信息
+	seat_state_map 1 : *SeatState(seat)		#玩家位置状态
+	player_cards_map 2 : *SeatCards(seat)  	#玩家的牌信息(由于有比过牌的所以都需要传递)
+	history 3 : GameEndEvent 				#玩家的上一局结算历史信息
+	seat_type 4 : Seat_Type  				#玩家座位事件的类型
+	next_bank_seat 5 : integer 				#庄家
+	deal_id 6: string 						#局号
+	seat_count 7 : integer 					#房间桌子座位数
+	desk_config 8 : *integer 				#桌子必要的初始化数据
+	bet_history 9 : *integer 				#所有玩家的下注历史
+	seat_bet_map 10 : *Seat_Bet(seat)		#下注的分布
+	s_player_win 11 : integer				#陪玩玩家胜利的位置
+}
+
+#游戏开始事件
+.GameStartEvent{
+	seat_bet_map 0 : *Seat_Bet(seat)		#下注的分布
+	seat_state_map 1 : *SeatState(seat)		#玩家位置状态(和上面的下注分布都可以区分哪些在游戏中)
+	total_bet 2 : integer 					#总下注
+	next_bank_seat 3: integer 				#庄家
+	deal_id 4: string 						#局号
+	player_cards_map 5 : *SeatCards(seat)  	#玩家的牌信息(由于有比过牌的所以都需要传递)
+	s_player_win 6 : integer				#陪玩玩家胜利的位置
+}
+
+#下注/盖牌/看牌/比牌/回应比牌事件
+.NormalEvent {
+	seat 0 : integer 
+	player_id 1 : integer
+	bet_num 2 : integer 					#下注金额
+	choose 3 : integer 						#1:同意 2:不同意
+	cardinfo 4 : CardsGroup  				#牌型信息（看牌用）
+	compare_seat 5 : integer				#被比牌的位置
+	bet_type 6 : integer					#下注类型 1:盲注 2:盲注加倍 3:明注 4:明注加倍 5:比牌
+	fold_type 7 : integer					#1:玩家胜利之后的fold
+}
+
+#比牌结果事件
+.CompareResultEvent {
+	win_seat 0 : *integer 					#获胜的位置
+	player_cards_map 1 : *SeatCards(seat)  	#玩家的牌信息(由于有比过牌的所以都需要传递)
+	compare_seats 2 : *integer				#参与比牌的位置
+}
+
+#送礼物事件
+.PlayerSendGiftEvent {
+	from_seat 0: integer
+	from_player_id 1: integer
+	to_seat 2: integer
+	to_player_id 3: integer
+	gift_id 4: integer
+	gift_cost 5: integer
+}
+
+.Gift {
+	id 0: integer
+	cost 1: integer
+}
+
+.SendGiftListEvent {
+	gift 0: *Gift
+}
+
+.PunishEvent {
+	seat 0: integer
+	player_id 1: integer
+	punish 2: integer
+}

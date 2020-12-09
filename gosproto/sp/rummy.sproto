@@ -1,0 +1,242 @@
+.BalanceInfo{
+	type 0 : integer  #余额类型
+	last_operate_time 1 : string #最后一次操作时间
+	balance 2 : integer #金额
+	player_id 3 : integer 
+	sid 4 : integer #数据库自增id
+}
+
+.PlayerInfo{
+	seat 0 : integer
+	player_id 1 : integer
+	nickname 2 : string
+	head_id 3 : integer
+	head_url 4 : string
+	sex 5 : integer
+	balance_total 6 : integer
+	balance 7 : *BalanceInfo
+	avatar 8 : integer
+	fb_avatar 9 : string
+}
+
+.SeatState{
+	seat 0 : integer 
+	state 1 : integer
+}
+
+.CardsGroup {
+	type 0 : integer    #类型 0：INVALID不成序的 1：PURE_SEQUENCE 2：IMPURE_SEQUENCE 3：SET
+	cards 1 : *integer  #牌堆（三张或者三张以上）
+}
+
+.SeatCards {
+	seat 0 : integer
+	cardinfo 1 : *CardsGroup  #牌型信息
+	scores 2 : integer # 牌型分数
+	cards 3 : *integer #服务器的数据
+	player_info 4 : PlayerInfo
+}
+
+#结算信息
+.Winlost {
+	seat 0 : integer
+	winlost 1 : integer
+	fee 2 : integer #抽水
+	player_id 3 : integer #玩家id 
+}
+
+.TableBase {
+	deal_id 0 : integer
+	game_state 1 : integer
+}
+
+.Table {
+	table_base 0 : TableBase
+	player_map 1 : *PlayerInfo(seat)
+	seat_state_map 2 : *SeatState(seat)
+	player_cards_map 3 : *SeatCards(seat)
+	winlost_map 4 : *Winlost(seat)
+}
+
+.QryDeskReq {
+	
+}
+
+.QryDeskReply {
+	table_info 0 : Table
+}
+
+#抽牌请求
+.DrawReq {
+	draw_type 0: integer #抽牌类型，0是从牌堆中，1从别人丢弃的牌堆中
+	seat 1 : integer   #抽牌位置
+	player_id 2 : integer #抽牌玩家id
+}
+
+.DrawReply {
+	card 0 : integer  #获取到的牌
+	cards_info 1 : SeatCards   #玩家整个牌组的信息
+}
+
+#出牌请求
+.DiscardReq {
+	seat 0 : integer
+	player_id 1 : integer
+	discard_card 2 : integer 
+}
+
+.DiscardReply {
+	cards_info 0 : SeatCards   #玩家整个牌组的信息
+}
+
+#玩家提出胜利请求
+.WinReq {
+	cards_info 0 : SeatCards   #玩家卡组信息
+	wincard 1 : integer		#玩家获胜时出的牌
+
+}
+
+.WinReply {
+	result 0 : integer  #返回可不可行0:ok,1:not ok
+}
+
+#玩家组牌请求
+.DeclareReq {
+	cards_info 0 : SeatCards   #玩家整个牌组的信息
+}
+
+.DeclareReply {
+	result 0 : integer #可不可行0:ok,1:not ok，不可行直接系统默认
+}
+
+#弃牌请求
+.DropReq {
+	seat 0 : integer
+	player_id 1 : integer
+}
+
+.DropReply {
+	winlost 0 : integer 		#玩家输赢
+	player_info 1 : PlayerInfo 	#玩家信息
+}
+
+.DealInfo{
+	table_info 0 : Table
+}
+
+#牌局结束事件
+.GameEndEvent{
+	player_map 0 : *PlayerInfo(seat)
+	seat_state_map 1 : *SeatState(seat)
+	player_cards_map 2 : *SeatCards(seat)
+	winlost_map 3 : *Winlost(seat)
+	general_card 4 : integer #万能牌
+}
+
+.UsedCardInfo{
+	player_id 0 : integer    #数字-1代表系统
+	card 1 : integer
+}
+
+.Seat_Type{
+		seat 0 : integer
+		type 1 : integer 	#1:sit 2:kick 3:left 4:reconnnect
+	}
+#坐位事件
+.SeatStateEvent{
+	player_map 0 : *PlayerInfo(seat)
+	seat_state_map 1 : *SeatState(seat)
+	player_cards_map 2 : SeatCards  #当前玩家的牌信息
+	winlost_map 3 : *Winlost(seat)
+	general_card 4 : integer  #癞子
+	used_cards 5 : *UsedCardInfo #出过的牌
+	history 6 : GameEndEvent
+	seat_type 7 : Seat_Type  #玩家座位事件的类型
+	next_bank_seat 8: integer #庄家
+	deal_id 9: string #局号
+	seat_count 10 : integer #房间桌子座位数
+}
+
+
+#游戏开始事件
+.GameStartEvent{
+	cards 0 : *integer
+	top_used_card 1: UsedCardInfo  #第一张明牌
+	general_card 2: integer #通用牌  
+	next_bank_seat 3: integer #庄家
+	deal_id 4: string #局号
+}
+
+#抽牌事件
+.PlayerDrawEvent {
+	seat 1 : integer #
+	draw_type 2 : integer #从哪个牌堆获取的牌
+	card 3 : integer 
+	player_id 4 : integer
+}
+
+#出牌事件
+.PlayerDiscardEvent {
+	seat 0 : integer
+	discard_card 1 : integer
+	player_id 2 : integer
+}
+
+#认输事件
+.PlayerDropEvent {
+	seat 0 : integer
+	player_id 1 : integer
+	winlost 2 : integer      #弃牌玩家损失金额
+}
+
+#胜利事件
+.PlayerWinEvent {
+	seat 0 : integer
+	player_id 1 : integer
+	wincard 2 : integer
+}
+
+#组牌返回事件
+.PlayerDeclareEvent {
+	winlost_map 0 : Winlost #这个玩家的输赢信息
+}
+
+#送礼物事件
+.PlayerSendGiftEvent {
+	from_seat 0: integer
+	from_player_id 1: integer
+	to_seat 2: integer
+	to_player_id 3: integer
+	gift_id 4: integer
+	gift_cost 5: integer
+}
+
+#送礼物请求
+.PlayerSendGiftReq {
+	from_player_id 0: integer
+	to_player_id 1: integer
+	gift_id 2: integer
+}
+
+#送礼物回复
+.PlayerSendGiftResp {
+	from_player_id 0: integer
+	to_player_id 1: integer
+	gift_id 2: integer
+	gift_cost 3: integer
+}
+
+.Gift {
+	id 0: integer
+	cost 1: integer
+}
+
+.SendGiftListEvent {
+	gift 0: *Gift
+}
+
+.PunishEvent {
+	seat 0: integer
+	player_id 1: integer
+	punish 2: integer
+}

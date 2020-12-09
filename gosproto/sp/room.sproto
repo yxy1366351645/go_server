@@ -1,0 +1,20 @@
+.EnterRoomReply{
+	room_id 0 : integer
+	roomproxy 1 : string
+	room_type 2 : integer
+}
+
+.ExitRoomReply {
+	
+}
+
+.GroupReq{
+	game_id 0 : integer
+}
+
+.GroupReply{
+	game_id 0 : integer
+	point_value 1 : integer
+	desk_id 2 : integer
+	desk_config 3 : *integer #桌子必要的初始化数据
+}

@@ -1,0 +1,20 @@
+.BalanceInfo{
+	type 0 : integer  #余额类型
+	last_operate_time 1 : string #最后一次操作时间
+	balance 2 : integer #金额
+	player_id 3 : integer 
+	sid 4 : integer #数据库自增id
+}
+
+.PlayerInfo{
+	seat 0 : integer
+	player_id 1 : integer
+	nickname 2 : string
+	head_id 3 : integer
+	head_url 4 : string
+	sex 5 : integer
+	balance_total 6 : integer
+	balance 7 : *BalanceInfo
+	avatar 8 : integer
+	fb_avatar 9 : string
+}

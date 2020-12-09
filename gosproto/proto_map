@@ -1,0 +1,187 @@
+PROTO_TYPE = {
+	C2S = 1,
+	S2C = 2,
+}
+
+local proto_map = {
+	protos = {},
+	proto_pool = {},
+}
+
+-- 初始化proto_map.protos
+local mt = {}
+mt.__newindex = function(t, k, v)
+	t.protos[k] = v
+	for key, proto in pairs(v) do
+		if key ~= "module" then
+			assert(proto_map[proto.id] == nil, "has same proto["..proto.id.."]")
+			local tmp = {}
+			tmp.name = key
+			tmp.module = v.module.name
+			tmp.server = v.module.server
+			tmp.service = v.module.service
+			tmp.is_agent = v.module.is_agent
+			tmp.id = proto.id
+			tmp.type = proto.type
+			tmp.request = proto.request
+			tmp.response= proto.response
+			tmp.desc = proto.desc
+			tmp.fullname = v.module.name.."."..key
+			t.protos[proto.id] = tmp
+		end
+	end
+end
+-- 设置元表
+setmetatable(proto_map, mt)
+
+--网关
+M_Gate = {
+	module = MODULE.GATE,
+	ping             = {id = 0x0001, type = PROTO_TYPE.C2S,  request = nil, response = nil, desc = "心跳"},
+	network_event    = {id = 0x00a1, type = PROTO_TYPE.S2C, request = nil, response = "gate.NetworkEvent", desc = "网络事件"},
+}
+proto_map.Gate = M_Gate
+
+--验证
+M_AUTH = {
+	module  = MODULE.AUTH,
+	player_login   = {id = 0x0101, type = PROTO_TYPE.C2S, request = "auth.PlayerLoginReq", response = "auth.PlayerLoginReply", desc = "登陆"},
+	get_stime  = {id = 0x0102, type = PROTO_TYPE.C2S,  request = nil, response = "auth.ServerTimeReply", desc = "客户端时间同步"},
+	heart_beat  = {id = 0x0103, type = PROTO_TYPE.C2S,  request = nil, response = nil, desc = "心跳"},
+
+	kick_player = {id = 0x01a1, type = PROTO_TYPE.S2C,  request = nil, response = "auth.KickPlayer", desc = "玩家异地登陆等情况"},
+}
+proto_map.auth = M_AUTH
+
+--大厅
+M_HALL = {
+	module = MODULE.HALL,
+	get_room_inst_list_by_game_id = {id = 0x0201, type = PROTO_TYPE.C2S, request = "hall.RoomListReq", response = "hall.RoomInstList", desc = "获取房间实例列表"},
+	get_player_online_state = {id = 0x0202, type = PROTO_TYPE.C2S, request = nil, response = "hall.PlayerOnlineState", desc = "获取玩家在线状态"},
+}
+proto_map.hall = M_HALL
+
+--玩家
+M_PLAYER = {
+	module = MODULE.PLAYER,
+	qry_player_balance = {id = 0x0301, type = PROTO_TYPE.C2S, request = nil, response = "player.PlayerInfo", desc = "获取玩家(余额)信息"},
+
+	upd_player_balance = {id = 0x03a1, type = PROTO_TYPE.S2C, request = nil, response = "player.PlayerInfo", desc = "更新玩家(余额)信息"},
+}
+proto_map.player = M_PLAYER
+
+--房间
+M_ROOM = {
+	module = MODULE.ROOM,
+	enter_room = {id = 0x0d01, type = PROTO_TYPE.C2S, request = nil, response = "room.EnterRoomReply", desc = "进入游戏房间"},
+	exit_room = {id = 0x0d02, type = PROTO_TYPE.C2S, request = nil, response = "room.ExitRoomReply", desc = "退出游戏房间"},
+	group_request = {id = 0x0d03, type = PROTO_TYPE.C2S, request = "room.GroupReq", response = "room.GroupReply", desc = "请求分组"},
+	switch_table = {id = 0x0d04, type = PROTO_TYPE.C2S, request = "room.GroupReq", response = "room.GroupReply", desc = "换桌"},
+	group_teen = {id = 0x0d05, type = PROTO_TYPE.C2S, request = "room.GroupReq", response = "room.GroupReply", desc = "teenpatti请求分组"},
+}
+proto_map.room = M_ROOM
+
+M_DESK = {
+	module = MODULE.DESK,
+	
+	add_cd_event = {id = 0x0e01, type = PROTO_TYPE.S2C, request = nil, response = "desk.AddCdEvent", desc = "增加cd事件"},
+	del_cd_event = {id = 0x0e02, type = PROTO_TYPE.S2C, request = nil, response = "desk.DelCdEvent", desc = "删除cd事件"},
+}
+proto_map.desk = M_DESK
+
+--血拼牛牛
+M_XPNN = {
+	module = MODULE.XPNN,
+	qry_desk = {id = 0x1001, type = PROTO_TYPE.C2S, request = "xpnn.QryDeskReq", response = "xpnn.QryDeskReply", desc = "查询游戏台"},
+	qiang_banker = {id = 0x1002, type = PROTO_TYPE.C2S, request = "xpnn.QiangBankerReq", response = "xpnn.QiangBankerReply", desc = "抢庄"},
+	bet = {id = 0x1003, type = PROTO_TYPE.C2S, request = "xpnn.BetReq", response = "xpnn.BetReply", desc = "倍投"},
+	open_card = {id = 0x1004, type = PROTO_TYPE.C2S, request = nil, response = nil, desc = "开牌"},
+
+	deal_info_event = {id = 0x10a1, type = PROTO_TYPE.S2C, request = nil, response = "xpnn.DealInfo", desc = "牌局信息事件"},
+	game_start_event = {id = 0x10a2, type = PROTO_TYPE.S2C, request = nil, response = "xpnn.GameStartEvent", desc = "开始游戏事件"},
+	qiang_banker_event = {id = 0x10a3, type = PROTO_TYPE.S2C, request = nil, response = "xpnn.QiangBankerEvent", desc = "抢庄事件"},
+	bet_event = {id = 0x10a4, type = PROTO_TYPE.S2C, request = nil, response = "xpnn.BetEvent", desc = "投注事件"},
+	deal_card_event = {id = 0x10a5, type = PROTO_TYPE.S2C, request = nil, response = "xpnn.DealCardEvent", desc = "发牌事件"},
+	open_card_event = {id = 0x10a6, type = PROTO_TYPE.S2C, request = nil, response = "xpnn.OpenCardEvent", desc = "开牌事件"},
+	game_end_event = {id = 0x10a7, type = PROTO_TYPE.S2C, request = nil, response = "xpnn.GameEndEvent", desc = "游戏结束事件"},
+	seat_state_event = {id = 0x10a8, type = PROTO_TYPE.S2C, request = nil, response = "xpnn.SeatStateEvent", desc = "坐位事件"},
+}
+proto_map.xpnn = M_XPNN
+
+
+--炸金花
+M_ZJH = {
+	module = MODULE.ZJH,
+	qry_desk = {id = 0x2001, type = PROTO_TYPE.C2S, request = "zjh.QryDeskReq", response = "zjh.QryDeskReply", desc = "查询游戏台"},
+	qiang_banker = {id = 0x2002, type = PROTO_TYPE.C2S, request = "zjh.QiangBankerReq", response = "zjh.QiangBankerReply", desc = "抢庄"},
+	bet = {id = 0x2003, type = PROTO_TYPE.C2S, request = "zjh.BetReq", response = "zjh.BetReply", desc = "倍投"},
+	open_card = {id = 0x2004, type = PROTO_TYPE.C2S, request = nil, response = nil, desc = "开牌"},
+
+	deal_info_event = {id = 0x20a1, type = PROTO_TYPE.S2C, request = nil, response = "zjh.DealInfo", desc = "牌局信息事件"},
+	game_start_event = {id = 0x20a2, type = PROTO_TYPE.S2C, request = nil, response = "zjh.GameStartEvent", desc = "开始游戏事件"},
+	qiang_banker_event = {id = 0x20a3, type = PROTO_TYPE.S2C, request = nil, response = "zjh.QiangBankerEvent", desc = "抢庄事件"},
+	bet_event = {id = 0x20a4, type = PROTO_TYPE.S2C, request = nil, response = "zjh.BetEvent", desc = "投注事件"},
+	deal_card_event = {id = 0x20a5, type = PROTO_TYPE.S2C, request = nil, response = "zjh.DealCardEvent", desc = "发牌事件"},
+	open_card_event = {id = 0x20a6, type = PROTO_TYPE.S2C, request = nil, response = "zjh.OpenCardEvent", desc = "开牌事件"},
+	game_end_event = {id = 0x20a7, type = PROTO_TYPE.S2C, request = nil, response = "zjh.GameEndEvent", desc = "游戏结束事件"},
+	seat_state_event = {id = 0x20a8, type = PROTO_TYPE.S2C, request = nil, response = "zjh.SeatStateEvent", desc = "坐位事件"},
+}
+proto_map.zjh = M_ZJH
+
+M_RUMMY = {
+	module = MODULE.RUMMY,
+	qry_desk = {id = 0x3001, type = PROTO_TYPE.C2S, request = "rummy.QryDeskReq", response = "rummy.QryDeskReply", desc = "查询游戏台"},
+	player_draw = {id = 0x3002, type = PROTO_TYPE.C2S, request = "rummy.DrawReq", response = "rummy.DrawReply", desc = "抽牌"},
+	player_discard = {id = 0x3003, type = PROTO_TYPE.C2S, request = "rummy.DiscardReq", response = "rummy.DiscardReply", desc = "弃牌"},
+	player_drop = {id = 0x3004, type = PROTO_TYPE.C2S, request = "rummy.DropReq", response = "rummy.DropReply", desc = "认输"},
+	player_win = {id = 0x3005, type = PROTO_TYPE.C2S, request = "rummy.WinReq", response = nil, desc = "胜利"},
+	player_declare = {id = 0x3006, type = PROTO_TYPE.C2S, request = "rummy.DeclareReq", response = "rummy.DeclareReply", desc = "成牌"},
+	player_continue = {id = 0x3007, type = PROTO_TYPE.C2S, request = nil, response = nil, desc = "继续"},
+	player_send_gift = {id = 0x3008, type = PROTO_TYPE.C2S, request = "rummy.PlayerSendGiftReq", response = "rummy.PlayerSendGiftResp", desc = "送礼物"},
+	synchronous_cards = {id = 0x3009, type = PROTO_TYPE.C2S, request = "rummy.DeclareReq", response = "rummy.DeclareReply", desc = "同步前端组牌"},
+
+
+	deal_info_event = {id = 0x30a1, type = PROTO_TYPE.S2C, request = nil, response = "rummy.DealInfo", desc = "牌局信息事件"},
+	game_start_event = {id = 0x30a2, type = PROTO_TYPE.S2C, request = nil, response = "rummy.GameStartEvent", desc = "开始游戏事件"},
+	player_draw_event = {id = 0x30a3, type = PROTO_TYPE.S2C, request = nil, response = "rummy.PlayerDrawEvent", desc = "抽牌事件"},
+	player_discard_event = {id = 0x30a4, type = PROTO_TYPE.S2C, request = nil, response = "rummy.PlayerDiscardEvent", desc = "弃牌事件"},
+	deal_card_event = {id = 0x30a5, type = PROTO_TYPE.S2C, request = nil, response = "rummy.DealCardEvent", desc = "发牌事件"},
+	player_drop_event = {id = 0x30a6, type = PROTO_TYPE.S2C, request = nil, response = "rummy.PlayerDropEvent", desc = "认输事件"},
+	player_win_event = {id = 0x30a7, type = PROTO_TYPE.S2C, request = nil, response = "rummy.PlayerWinEvent", desc = "胜利事件"},
+	player_declare_event = {id = 0x30a8, type = PROTO_TYPE.S2C, request = nil, response = "rummy.PlayerDeclareEvent", desc = "完成事件"},
+	game_end_event = {id = 0x30a9, type = PROTO_TYPE.S2C, request = nil, response = "rummy.GameEndEvent", desc = "游戏结束事件"},
+	seat_state_event = {id = 0x30aa, type = PROTO_TYPE.S2C, request = nil, response = "rummy.SeatStateEvent", desc = "坐位事件"},
+	player_gift_event = {id = 0x30ab, type = PROTO_TYPE.S2C, request = nil, response = "rummy.PlayerSendGiftEvent", desc = "礼物事件"},
+	gift_list_event = {id = 0x30ac, type = PROTO_TYPE.S2C, request = nil, response = "rummy.SendGiftListEvent", desc = "礼物列表事件"},
+	punish_event = {id = 0x30ad, type = PROTO_TYPE.S2C, request = nil, response = "rummy.PunishEvent", desc = "玩家认输或退出惩罚金额事件"},
+}
+proto_map.rummy = M_RUMMY
+
+M_TEENPATTI = {
+	module = MODULE.TEENPATTI,
+	player_check = {id = 0x4001, type = PROTO_TYPE.C2S, request = nil, response = "teenpatti.NormalReply", desc = "玩家看牌"},
+	player_bet = {id = 0x4002, type = PROTO_TYPE.C2S, request = "teenpatti.NormalReq", response = "teenpatti.NormalReply", desc = "玩家下注"},
+	player_fold = {id = 0x4003, type = PROTO_TYPE.C2S, request = nil, response = nil, desc = "玩家盖牌"},
+	player_compare = {id = 0x4004, type = PROTO_TYPE.C2S, request = nil, response = nil, desc = "发起比牌"},
+	handle_compare = {id = 0x4005, type = PROTO_TYPE.C2S, request = "teenpatti.NormalReq", response = nil, desc = "比牌选择"},
+	player_continue = {id = 0x4006, type = PROTO_TYPE.C2S, request = nil, response = nil, desc = "继续"},
+	--这条协议之后有时间合并到room或者desk中
+	player_send_gift = {id = 0x4007, type = PROTO_TYPE.C2S, request = "teenpatti.PlayerSendGiftReq", response = nil, desc = "送礼物"},
+
+	game_start_event = {id = 0x40a1, type = PROTO_TYPE.S2C, request = nil, response = "teenpatti.GameStartEvent", desc = "开始游戏事件"},
+	bet_event = {id = 0x40a2, type = PROTO_TYPE.S2C, request = nil, response = "teenpatti.NormalEvent", desc = "下注事件"},
+	fold_event = {id = 0x40a3, type = PROTO_TYPE.S2C, request = nil, response = "teenpatti.NormalEvent", desc = "盖牌事件"},
+	check_event = {id = 0x40a4, type = PROTO_TYPE.S2C, request = nil, response = "teenpatti.NormalEvent", desc = "看牌事件"},
+	compare_event = {id = 0x40a5, type = PROTO_TYPE.S2C, request = nil, response = "teenpatti.NormalEvent", desc = "玩家发起比牌事件"},
+	handle_compare_event = {id = 0x40a6, type = PROTO_TYPE.S2C, request = nil, response = "teenpatti.NormalEvent", desc = "玩家回应比牌事件"},
+	compare_result_event = {id = 0x40a7, type = PROTO_TYPE.S2C, request = nil, response = "teenpatti.CompareResultEvent", desc = "比牌结果事件"},
+	force_compare_event = {id = 0x40a8, type = PROTO_TYPE.S2C, request = nil, response = "teenpatti.CompareResultEvent", desc = "强制比牌事件"},
+	game_end_event = {id = 0x40a9, type = PROTO_TYPE.S2C, request = nil, response = "teenpatti.GameEndEvent", desc = "游戏结束事件"},
+	seat_state_event = {id = 0x40aa, type = PROTO_TYPE.S2C, request = nil, response = "teenpatti.SeatStateEvent", desc = "坐位事件"},
+	player_gift_event = {id = 0x40ab, type = PROTO_TYPE.S2C, request = nil, response = "teenpatti.PlayerSendGiftEvent", desc = "礼物事件"},
+	gift_list_event = {id = 0x40ac, type = PROTO_TYPE.S2C, request = nil, response = "teenpatti.SendGiftListEvent", desc = "礼物列表事件"},
+}
+proto_map.teenpatti = M_TEENPATTI
+
+
+return proto_map

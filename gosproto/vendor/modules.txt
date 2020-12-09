@@ -1,0 +1,6 @@
+# github.com/davyxu/gosproto v0.0.0-20190820093047-001cf85c891c
+## explicit
+github.com/davyxu/gosproto
+# github.com/gorilla/websocket v1.4.2
+## explicit
+github.com/gorilla/websocket

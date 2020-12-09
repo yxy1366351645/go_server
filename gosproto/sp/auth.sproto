@@ -1,0 +1,52 @@
+.BalanceInfo{
+	type 0 : integer  #余额类型
+	last_operate_time 1 : string #最后一次操作时间
+	balance 2 : integer #金额
+	player_id 3 : integer 
+	sid 4 : integer #数据库自增id
+}
+
+.PlayerInfo{
+	seat 0 : integer
+	player_id 1 : integer
+	nickname 2 : string
+	head_id 3 : integer
+	head_url 4 : string
+	sex 5 : integer
+	balance_total 6 : integer
+	balance 7 : *BalanceInfo
+	avatar 8 : integer
+	fb_avatar 9 : string
+}
+
+.PlayerBase {
+	player_id 0 : integer
+	nickname 1 : string
+	head_id 2 : integer
+	head_url 3 : string
+	sex 4 : integer #0-未知 1-男 2-女
+	create_time 5 : integer 
+	last_mod_time 6 : integer
+	balance 7 : *BalanceInfo
+	balance_total 8 : integer
+}
+
+.PlayerLoginReq {
+	token   0 : string  #token
+}
+
+.PlayerLoginReply {
+	player 0 : PlayerBase
+	token 1 : string #登录token
+	is_logined_game 2 : boolean  #是否在游戏中 
+	game_ids 3 : *integer #游戏id
+}
+
+.ServerTimeReply{
+	timestamp 0 : integer  #服务器时间戳
+}
+
+.KickPlayer{
+	type 0 : integer #踢出类型    1:多设备登陆
+	player_id 1 : integer  
+}

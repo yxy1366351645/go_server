@@ -1,0 +1,28 @@
+.RoomInst{
+	roomproxy 0 : string #房间实例代理
+	player_num 1 : integer #当前玩家数量
+	player_limit 2 : integer #房间玩家上限
+	server_id 3 : integer #
+	room_id 4 : integer
+	game_id 5 : integer #游戏编号
+	room_type 6 : integer
+	room_name 7 : string
+	init_bet 8 : integer
+	min_enter 9 : integer
+	group_type 10 : integer
+	min_group_player 11 : integer
+	max_group_player 12 : integer
+}
+
+.RoomListReq{
+	game_id 0 : *integer #游戏id
+}
+
+.RoomInstList{
+	room_insts 0 : *RoomInst #游戏房间实例
+}
+
+.PlayerOnlineState{
+	room_id 0 : integer #玩家所在房间id
+	roomproxy 1 : string #玩家所在房间代理
+}
