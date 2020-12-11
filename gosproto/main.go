@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"gosproto/address"
 	"gosproto/auth"
 	"gosproto/header"
 	"gosproto/room"
@@ -12,7 +11,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"time"
+	"reflect"
 
 	"github.com/gorilla/websocket"
 )
@@ -21,16 +20,17 @@ var addr = flag.String("addr", "10.10.210.79:5002", "http service address")
 
 func main() {
 	fmt.Println("hello world")
-	c := connect()
-	defer c.Close()
-	testLogin(c)
-	time.Sleep(time.Duration(2) * time.Second)
-	testEnterRoom(c)
-	time.Sleep(time.Duration(2) * time.Second)
-	testGroupRequest(c)
-	time.Sleep(time.Duration(2) * time.Second)
-	testExitRoom(c)
-	time.Sleep(time.Duration(5) * time.Second)
+	// c := connect()
+	// defer c.Close()
+	// testLogin(c)
+	// time.Sleep(time.Duration(2) * time.Second)
+	// testEnterRoom(c)
+	// time.Sleep(time.Duration(2) * time.Second)
+	// testGroupRequest(c)
+	// time.Sleep(time.Duration(2) * time.Second)
+	// testExitRoom(c)
+	// time.Sleep(time.Duration(5) * time.Second)
+	testDecodeAuth()
 }
 
 func login(c *websocket.Conn) {
@@ -141,6 +141,60 @@ func testExitRoom(c *websocket.Conn) {
 	exitRoom(c)
 }
 
+func testDecodeAuth() {
+	//压缩
+	reqHeader := &header.Package{
+		Protoid:  0x0101,
+		Response: 0,
+	}
+	encodeHeader, err := sproto.Encode(reqHeader)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("序列化后的header数据：", encodeHeader)
+
+	req := &auth.PlayerLoginReq{
+		Token: "05708b3c37212f57a68216304d721171",
+	}
+	encodeReq, err := sproto.Encode(req)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("序列化后的data数据：", encodeReq)
+	var encodeHeaderReq = append(encodeHeader, encodeReq...)
+	packEncodeHeaderReq := sproto.Pack(encodeHeaderReq)
+
+	fmt.Println("压缩后的req数据：", packEncodeHeaderReq)
+
+	//解压
+	unpackEncodeHeaderReq, err := sproto.Unpack(packEncodeHeaderReq)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("解压后的数据：", unpackEncodeHeaderReq)
+	spHeader := reflect.New(header.SProtoStructs[0]).Interface()
+	// spHeader := reflect.New(reflect.TypeOf(&header.Package{}).Elem()).Interface()
+
+	decodeHeader, err := sproto.Decode(unpackEncodeHeaderReq, spHeader)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("spHeader", spHeader)
+
+	fmt.Println("decode header length:", decodeHeader)
+	fmt.Println("decode后的header：", spHeader.(*header.Package).Protoid)
+
+	spReq := reflect.New(auth.SProtoStructs[3]).Interface()
+	decodeReq, err := sproto.Decode(unpackEncodeHeaderReq[decodeHeader:], spReq)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("spReq", spReq)
+
+	fmt.Println("decode req length:", decodeReq)
+	fmt.Println("decode后的req, Token：", spReq.(*auth.PlayerLoginReq).Token)
+}
+
 func connect() *websocket.Conn {
 	flag.Parse()
 	log.SetFlags(0)
@@ -163,49 +217,5 @@ func send(c *websocket.Conn, req []byte) {
 	if err != nil {
 		log.Println("write:", err)
 		return
-	}
-}
-
-func testAddressBook() {
-	input := &address.AddressBook{
-		Person: []*address.Person{
-			&address.Person{
-				Name: "Alice",
-				Id:   10000,
-				Phone: []*address.PhoneNumber{
-					&address.PhoneNumber{
-						Number: "123456789",
-						Type:   1,
-					},
-					&address.PhoneNumber{
-						Number: "87654321",
-						Type:   2,
-					},
-				},
-			},
-			&address.Person{
-				Name: "Bob",
-				Id:   20000,
-				Phone: []*address.PhoneNumber{
-					&address.PhoneNumber{
-						Number: "01234567890",
-						Type:   3,
-					},
-				},
-			},
-		},
-	}
-	data, err := sproto.Encode(input)
-	fmt.Println("序列化后的数据：", data)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	var sample address.AddressBook
-	_, err = sproto.Decode(data, &sample)
-
-	if err != nil {
-		fmt.Println(err)
 	}
 }
